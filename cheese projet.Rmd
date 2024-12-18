@@ -1,0 +1,136 @@
+---
+title: "Cheese"
+output: html_document
+date: "2024-12-03"
+authors: "Sarah Henderson, Kevin Pelletier, Maude Santerre"
+---
+Introduction
+Il y a plus de 4000 ans, l’homme a commencé a fabriqué du fromage. En effet, ce produit a été découvert il y a très longtemps et sa popularité n’a jamais diminuer. Le formage peut être fait de lait provenant de plusieurs mammifères, tels que, de vache, de chèvre, de chameaux, de rennes, etc. Il existe donc une très grande variété de fromage dans le monde. Notre étude portera donc sur cet aliment dont plusieurs variables peuvent être analysées. 
+Nous utiliserons un total de 1187 fromages différents donc les données ont été récolté le 4 juin 2024 par jonthegeek sur le site Tidytuesday1. Nous nous intéresserons alors à l’origine du fromage, la teneur en gras, la teneur en calcium, la texture, s’il est végan ou végétarien, la famille du fromage, … 
+En prenant compte de nos choix d’analyses, les données utilisées seront les suivantes : 
+-	Pour l’analyses des valeurs nutritives des fromages par rapport à leur caractéristique alimentaire nous utiliserons Les variables :
+o	Vegetarian/Vegan
+o	Fat content/Calcium content
+-	Pour l’analyse des textures selon le pays nous utiliserons :
+o	Texture
+o	Country
+Toutes les variables de la base de données ont été recueillies du site internet cheese.com et celle-ci fut produite le 2024-06-04 et contient 1187 observations. Les variables Vegan/Vegetarian sont des variables qualitatives nominales. Chacune contient une valeur (TRUE ou FALSE) notant si le fromage est désigné comme étant soit végan, soit non végan, mais végétarien, soit non végétarien. Les variables analysées avec celles-ci sont Fat/Calcium content. Ce sont des variables quantitatives par intervalle qui nous fournisses les valeurs de calcium et de gras dans un fromage sous forme généralement en pourcentage (les valeurs peuvent aussi être données en g/g, mg/mg et en plage de pourcentage). La variable Texture est une variable qualitative nominale qui décrit la texture qu’un fromage peut avoir et peut contenir plus d’une description (ex. : creamy/smooth, elastic/firm/open, etc.). Cette variable sera utilisée avec la variable Country, qui est aussi une variable qualitative nominale.
+Nous nous attendons à trouver une corrélation par rapport aux concentrations de calcium et de gras ainsi qu’une corrélation avec une grande quantité de gras pour des fromages non végan et non végétarien puisque le lait animalier devrait contenir plus de gras. Pour voir cela, il serait avantageux de faire un graphique où on présente la concentration en gras par rapport à la concentration de calcium avec des points. Pour voir la différence entre végan, végétarien et non végétarien, il serait possible de changer la couleur des points ou les formes, une légende sera présentée. Nous aimerions aussi trouver un rapport entre la texture du fromage et sa provenance. Nous pourrions ainsi voir la spécialité d’un pays à produire une sorte de fromage plus qu’une autre. Pour voir ça, un graphique en bar chart segmenté, où les colonnes représenteront les textures et les couleurs seraient les pays selon la fréquence. Il se peut que cette visualisation soit trop compacte, si c’est le cas, il faudra faire des histogrammes pour chaque pays représenté en facet grid pour pouvoir les comparer.
+
+
+
+```{r setup, include=TRUE}
+library(tidyverse)
+cheese<-read_delim("cheeses.csv")
+
+```
+
+```{r pays, include=TRUE}
+cheese_country<-cheese%>%
+count(country)%>%
+  arrange(desc(n))%>%
+  slice(1:10)
+
+cheese_texture<-cheese%>%
+  filter(!is.na(texture))%>%
+count(texture)%>%
+  arrange(desc(n))%>%
+  slice(1:10)
+
+```
+
+
+```{r texture et pays, include=TRUE}
+
+cheese1<-cheese%>%
+  filter(country %in% c("United States", "France","Italy","Canada","Australia","United Kingdom","England","Ireland","England, Great Britain, United Kingdom","Germany"))%>%
+  filter(texture %in% c("creamy", "creamy, smooth","firm","smooth","creamy, crumbly","creamy, soft","crumbly", "compact", "firm, smooth", "soft"))
+
+
+ggplot(cheese1, aes(y=country, fill=texture)) + 
+  geom_bar(position="fill") +
+  labs ( x = "Pays",
+         fill= "Texture",
+         title = "Les 10 plus grands pays producteurs de fromage",
+         subtitle= "par rapport aux 10 textures principales")
+```
+
+
+Les 10 plus grands pays producteurs de fromage ont été analysés par rapport aux 10 plus textures les plus fréquemment produites. Nous remarquons que les États-Unis produisent d'avantage de fromage crémeux que les autres fromages. Pour le Royaume-Uni, les fromages sortant  possèdent une texture majoritairement crémeux et/ou friable. L'Italy produit d'avantage de fromage crémeux, compact ou ferme. L'Irelande produit beaucoup de fromage lisse ou crémeux. L'Allemagne a une grande production de fromage crémeux par rapport au reste de sa production, avec la texture crémeuse et douce en second. La France produit autant de fromage crémeux, crémeux et lisse ou lisse. Le groupe de l'Angleterre, la Grande-Bretagne et le Royaume-Uni produit plus de fromage crémeux. L'Angleterre suit la tendance du groupe précédent en produisant majoritairement des fromages crémeux. Le Canada produit beaucoup de fromage ferme et crémeux ou crémeux. Finalement, l'Australie fait beaucoup de fromage crémeux et doux.
+On peut donc constater que le fromage crémeux est la texture la plus produite et que tous les pays en font beaucoup. 
+
+
+
+```{r VFC, include=TRUE}
+Cheese_content<-cheese%>%
+  filter(
+    !is.na(fat_content),
+    !is.na(calcium_content)
+  )
+
+Cheese_content2<-Cheese_content%>%
+  mutate(
+    fat_content=case_when(
+      fat_content=="30-40%"~"35%",
+      fat_content=="43.3 g/100g"~"43%",
+      fat_content=="32.5 g/100g"~"33%",
+      fat_content=="43.3 g/100g"~"43%",
+      fat_content=="7 g/100g"~"7%",
+      fat_content=="27 g/100g"~"27%",
+      fat_content=="34.2 g/100g"~"34%",
+      fat_content=="20.8 g/100g"~"21%",
+      fat_content=="0 g/100g"~"0%",
+      fat_content=="30.5 g/100g"~"31%",
+      fat_content=="33 g/100g"~"33%",
+      fat_content=="18.3 g/100g"~"18%",
+      fat_content=="32.3 g/100g"~"32%",
+      TRUE ~ fat_content)
+  )
+cheese_content_corrected <- Cheese_content2 %>%
+  mutate(fat_content=gsub("%", "", fat_content),
+         fat_content=as.numeric(fat_content),
+         calcium_content=gsub("mg/100g", "", calcium_content),
+         calcium_content=as.numeric(calcium_content)
+  )%>%
+  mutate( normal_vege_vegan = case_when(
+    vegetarian == "TRUE"~"vege",
+    vegan == "TRUE"~"vegan",
+    vegetarian == "FALSE"~"normal"
+    
+  ))
+
+
+ggplot(cheese_content_corrected, aes(x=fat_content, y=calcium_content, colour = normal_vege_vegan))+
+  geom_point() +
+  labs(x= "Quantité de gras (%)",
+       y= "Quantité de calcium (mg/100g)",
+       title= "La teneur en gras en fonction la teneur en calcium selon le type de fromage" )
+
+```
+
+Nous voulions voir s'il y avait une relation entre la quantité de calcium et de gras contenus dans les fromages et s'il y avait un lien entre le fait qu'ils soient végératiens ou vegans. Pour commencer, nous n'avons pas de valeur de quantité de gras et de calcium pour les fromages végans. Nous ne voyons pas de corrélation entre la quantité de gras et de calcium ni le fait qu'il soit végétariens ou non. En effet, les fromages normaux ont des quantités de gras peut-être un peu plus grande avec des valeurs de teneur en calcium assez faible sauf pour un fromage. Pour les fromages végétariens, on voit qu'ils sont très éparsent sur la quantité de gras et qu'il n'y a pas de relation avec la quantité de calcium. Nos observations ne sont pas non plus très fiables, puisque nous avons peu d'observation pour juger de la relation. Il aurait fallu un plus grand échantillon que le 25 que nous avons pour mieux représenté les 1187 fromages que nous pouvons analysé. Le manque de donnés nous limitent.
+
+```{r regression, include=TRUE}
+cheese_vege<-cheese%>%
+   filter(
+    !is.na(vegetarian),
+    !is.na(family))
+ggplot(cheese_vege, aes(x=vegetarian, fill=family))+
+  geom_bar()
+  
+
+```
+
+```{r famille, include=TRUE}
+cheese_family<-cheese_vege%>%
+filter(family %in% c("Blue", "Brie", "Cheddar", "Cottage", "Gouda", "Parmesan"))
+ggplot(cheese_family, aes(x=vegetarian))+
+  geom_bar()+
+  facet_grid(~family)+
+  labs(title= "Les fromages végétariens selon leur famille")
+  
+
+```
+
+Nous voulions classifier les familles de fromage selon s'ils étaient végétariens ou non. Nous avons donc sélectionné 6 familles de fromages qui se trouvent en grande quantité pour les deux catégories: végétariens ou non. Nous pouvons voir qu'en général, selon nos données, qu'il y a plus de fromages végétariens que de non-végétariens et ce, pour chaque famille de fromages analysées. La seule exception est le brie, qui est disponible plus fréquemment en non-végétarien qu'en végétarien. Donc, bonne nouvelle pour les végétariens, on retrouve plus de fromage végé sur le marché!
+
